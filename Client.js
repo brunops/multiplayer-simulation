@@ -6,31 +6,37 @@ var Socket = require('./Socket');
 module.exports = (function () {
   'use strict';
 
-  function Client(serverSocket, context) {
-    this.init(serverSocket, context);
+  function Client(connectionSocket, context) {
+    this.init(connectionSocket, context);
   }
 
-  Client.prototype.init = function (serverSocket, context) {
+  Client.prototype.init = function (connectionSocket, context) {
     this.entity = null;
 
     this.messages = new MessageQueue();
 
     this.context = context;
 
-    this.serverSocket = serverSocket;
-    this.socketOut = new Socket();
+    // this socket is used only to notify the server when the
+    // client connects
+    this.connectionSocket = connectionSocket;
+
+    // All communication after connection is made through
+    // the client's own socket (which will be shared with the server)
+    this.socket = new Socket();
+
     this.bindEvents();
   };
 
   Client.prototype.bindEvents = function () {
     var self = this;
 
-    this.serverSocket.on('world-update', function (data) {
+    this.socket.on('world-update', function (data) {
       // fake 100ms lag
       self.messages.enqueue(Date.now() + 100, data);
     });
 
-    this.serverSocket.on('new-entity', function (data) {
+    this.socket.on('new-entity', function (data) {
       self.entityId = data.id;
       self.entity = new Entity({
         x: data.x,
@@ -38,7 +44,9 @@ module.exports = (function () {
       });
     });
 
-    this.socketOut.emit('connection', this.socketOut);
+    // notify server of connection and send new socket
+    // for any further communication
+    this.connectionSocket.emit('connection', this.socket);
   };
 
   Client.prototype.update = function () {
@@ -92,7 +100,7 @@ module.exports = (function () {
     input.entityId = this.entityId;
 
     // send data to server
-    this.socketOut.emit('input', input);
+    this.socket.emit('input', input);
 
     // client prediction
     // apply input to entity for instant feedback
