@@ -1,6 +1,7 @@
 /* global module, require */
 var MessageQueue = require('./MessageQueue');
 var Entity = require('./Entity');
+var Socket = require('./Socket');
 
 module.exports = (function () {
   'use strict';
@@ -17,16 +18,19 @@ module.exports = (function () {
     this.context = context;
 
     this.socketIn = socketIn;
-    this.socketOut = socketOut;
+    this.socketOut = new Socket();
     this.bindEvents();
   };
 
   Client.prototype.bindEvents = function () {
     var self = this;
+
     this.socketIn.on('world-update', function (data) {
       // fake 100ms lag
       self.messages.enqueue(Date.now() + 100, data);
     });
+
+    this.socketOut.emit('connection', this.socketOut);
   };
 
   Client.prototype.update = function () {
