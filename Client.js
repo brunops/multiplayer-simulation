@@ -19,9 +19,6 @@ module.exports = (function () {
     this.socketIn = socketIn;
     this.socketOut = socketOut;
     this.bindEvents();
-
-    // update client 60 frames per second
-    this.clientUpdate = setInterval(this.update, 1000 / 30);
   };
 
   Client.prototype.bindEvents = function () {
