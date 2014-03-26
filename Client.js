@@ -6,18 +6,18 @@ var Socket = require('./Socket');
 module.exports = (function () {
   'use strict';
 
-  function Client(socketIn, socketOut, context) {
-    this.init(socketIn, socketOut, context);
+  function Client(serverSocket, context) {
+    this.init(serverSocket, context);
   }
 
-  Client.prototype.init = function (socketIn, socketOut, context) {
+  Client.prototype.init = function (serverSocket, context) {
     this.entity = null;
 
     this.messages = new MessageQueue();
 
     this.context = context;
 
-    this.socketIn = socketIn;
+    this.serverSocket = serverSocket;
     this.socketOut = new Socket();
     this.bindEvents();
   };
@@ -25,22 +25,29 @@ module.exports = (function () {
   Client.prototype.bindEvents = function () {
     var self = this;
 
-    this.socketIn.on('world-update', function (data) {
+    this.serverSocket.on('world-update', function (data) {
       // fake 100ms lag
       self.messages.enqueue(Date.now() + 100, data);
+    });
+
+    this.serverSocket.on('new-entity', function (data) {
+      self.entityId = data.id;
+      self.entity = new Entity({
+        x: data.x,
+        y: data.y
+      });
     });
 
     this.socketOut.emit('connection', this.socketOut);
   };
 
   Client.prototype.update = function () {
-    this.processServerUpdates();
-
     // not yet connected
     if (!this.entity) {
       return;
     }
 
+    this.processServerUpdates();
     this.processInputs();
 
     // render entity
@@ -57,12 +64,6 @@ module.exports = (function () {
       for (var i = 0; i < worldState.length; ++i) {
         // yo, it's us
         if (worldState[i].entityId === this.entityId) {
-
-          // first world update ever, connection stablished.
-          if (!this.entity) {
-            this.entity = new Entity();
-          }
-
           this.entity.x = worldState[i].x;
           this.entity.y = worldState[i].y;
 
