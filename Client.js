@@ -28,6 +28,10 @@ module.exports = (function () {
     // the client's own socket (which will be shared with the server)
     this.socket = new Socket();
 
+    // Used for user reconciliation
+    this.inputNumber = 0;
+    this.pendingInputs = [];
+
     this.bindEvents();
   };
 
@@ -36,7 +40,7 @@ module.exports = (function () {
 
     this.socket.on('world-update', function (data) {
       // fake 100ms lag
-      self.messages.enqueue(data, Date.now() + 100);
+      self.messages.enqueue(data, Date.now());
     });
 
     this.socket.on('new-entity', function (data) {
@@ -90,7 +94,20 @@ module.exports = (function () {
           this.entity.x = worldState[i].x;
           this.entity.y = worldState[i].y;
 
-          // TODO: Apply all inputs not yet acknowledged by the server
+          for (var j = 0; j < this.pendingInputs.length; ++j) {
+            // input already processed by the server and thus, applied
+            // to the entity in the previous update
+            if (this.pendingInputs[j].inputNumber <= worldState[i].lastProcessedInput) {
+              // no need to store it anymore
+              // decrease j to prevent for loop from breaking
+              this.pendingInputs.splice(j--, 1);
+            }
+            else {
+              // input not yet acknoledged by the server
+              // apply it on top of server update for reconciliation
+              this.entity.applyInput(this.pendingInputs[j]);
+            }
+          }
         }
         else {
           var otherPlayer = this.otherClients[worldState[i].entityId];
@@ -117,9 +134,15 @@ module.exports = (function () {
       return;
     }
 
-    var input = this.keyboardState;
+    // need a truly new object to prevent
+    // multiple inputs sharing state
+    var input = this.keyboardStateClone();
     input.deltaModifier = deltaModifier;
     input.entityId = this.entityId;
+    input.inputNumber = this.inputNumber++;
+
+    // Store all inputs yet to be acknowledged by the server
+    this.pendingInputs.push(input);
 
     // send data to server
     this.socket.emit('input', input);
@@ -128,6 +151,15 @@ module.exports = (function () {
     // apply input to entity for instant feedback
     this.entity.applyInput(input);
   };
+
+  Client.prototype.keyboardStateClone = function () {
+    return {
+      LEFT: this.keyboardState.LEFT,
+      RIGHT: this.keyboardState.RIGHT,
+      UP: this.keyboardState.UP,
+      DOWN: this.keyboardState.DOWN
+    };
+  }
 
   Client.prototype.hasNewInput = function () {
     return !!(this.keyboardState.LEFT  ||
