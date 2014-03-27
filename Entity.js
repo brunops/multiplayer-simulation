@@ -38,6 +38,7 @@ module.exports = (function () {
   };
 
   Entity.prototype.render = function (ctx) {
+    ctx.beginPath();
     ctx.fillColor = this.color;
     ctx.strokeSize = this.borderSize;
     ctx.strokeColor = this.borderColor;
