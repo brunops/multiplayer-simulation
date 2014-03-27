@@ -9,29 +9,25 @@ var Socket = require('./Socket');
   // get DOM elements
   var serverCanvas = document.getElementById('server-canvas'),
       clientCanvas = document.getElementById('client-canvas'),
-      client2Canvas = document.getElementById('client2-canvas');
+      client2Canvas = document.getElementById('client2-canvas'),
+      client3Canvas = document.getElementById('client3-canvas');
 
   // set up world with only one client and one server
   var connectionSocket = new Socket(),
       server = new Server(connectionSocket, serverCanvas.getContext('2d')),
       client = new Client(connectionSocket, clientCanvas.getContext('2d')),
       client2 = new Client(connectionSocket, client2Canvas.getContext('2d')),
+      client3 = new Client(connectionSocket, client3Canvas.getContext('2d')),
       currClient = client;
 
 
-  // Toggle between clients every second
-  // just to test if evrybody is synchronized
-  setInterval(function () {
-    currClient.keyboardState = {};
-    currClient = currClient === client ? client2 : client;
-  }, 1000);
-
   // update server 30 times per second
-  setInterval(server.update.bind(server), 1000 / 20);
+  setInterval(server.update.bind(server), 1000 / 60);
 
   // update client 50 times per second
   setInterval(client.update.bind(client), 1000 / 60);
   setInterval(client2.update.bind(client2), 1000 / 60);
+  setInterval(client3.update.bind(client3), 1000 / 60);
 
   // bind some events
   document.addEventListener('keydown', function (e) {
