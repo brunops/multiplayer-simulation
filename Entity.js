@@ -3,7 +3,7 @@ module.exports = (function () {
   'use strict';
 
   function Entity(opts) {
-    this.init(opts);
+    this.init(opts || {});
   }
 
   Entity.prototype.init = function (opts) {
@@ -20,20 +20,20 @@ module.exports = (function () {
   };
 
   Entity.prototype.applyInput = function (input) {
-    if (input.keys.LEFT) {
+    if (input.LEFT) {
       this.x -= this.speed * input.deltaModifier;
     }
 
-    if (input.keys.RIGHT) {
+    if (input.RIGHT) {
       this.x += this.speed * input.deltaModifier;
     }
 
-    if (input.keys.DOWN) {
-      this.y -= this.speed * input.deltaModifier;
+    if (input.DOWN) {
+      this.y += this.speed * input.deltaModifier;
     }
 
-    if (input.keys.UP) {
-      this.y += this.speed * input.deltaModifier;
+    if (input.UP) {
+      this.y -= this.speed * input.deltaModifier;
     }
   };
 
