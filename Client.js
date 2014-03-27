@@ -36,7 +36,7 @@ module.exports = (function () {
 
     this.socket.on('world-update', function (data) {
       // fake 100ms lag
-      self.messages.enqueue(data);
+      self.messages.enqueue(data, Date.now() + 100);
     });
 
     this.socket.on('new-entity', function (data) {
