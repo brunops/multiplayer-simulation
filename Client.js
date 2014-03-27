@@ -11,7 +11,10 @@ module.exports = (function () {
   }
 
   Client.prototype.init = function (connectionSocket, context) {
+    this.keyboardState = {};
+
     this.entity = null;
+    this.otherClients = {};
 
     this.messages = new MessageQueue();
 
@@ -33,7 +36,7 @@ module.exports = (function () {
 
     this.socket.on('world-update', function (data) {
       // fake 100ms lag
-      self.messages.enqueue(Date.now() + 100, data);
+      self.messages.enqueue(data);
     });
 
     this.socket.on('new-entity', function (data) {
@@ -58,8 +61,19 @@ module.exports = (function () {
     this.processServerUpdates();
     this.processInputs();
 
+    this.render();
+  };
+
+  Client.prototype.render = function () {
+    this.context.clearRect(0, 0, 200, 200);
+
     // render entity
     this.entity.render(this.context);
+
+    var otherClients = Object.keys(this.otherClients);
+    for (var i = 0; i < otherClients.length; ++i) {
+      this.otherClients[otherClients[i]].render(this.context);
+    }
   };
 
   Client.prototype.processServerUpdates = function () {
@@ -67,6 +81,7 @@ module.exports = (function () {
 
     // note assignment on while loop
     while ((worldState = this.messages.dequeue())) {
+      worldState = worldState.payload;
 
       // world state is a list of entities
       for (var i = 0; i < worldState.length; ++i) {
@@ -78,7 +93,14 @@ module.exports = (function () {
           // TODO: Apply all inputs not yet acknowledged by the server
         }
         else {
-          // update other entities
+          var otherPlayer = this.otherClients[worldState[i].entityId];
+          if (otherPlayer) {
+            otherPlayer.x = worldState[i].x;
+            otherPlayer.y = worldState[i].y;
+          }
+          else {
+            this.otherClients[worldState[i].entityId] = new Entity(worldState[i]);
+          }
         }
       }
     }
@@ -86,7 +108,7 @@ module.exports = (function () {
 
   Client.prototype.processInputs = function () {
     var now = Date.now(),
-        deltaModifier = now - (this.lastInputTime ? this.lastInputTime : now);
+        deltaModifier = (now - (this.lastInputTime ? this.lastInputTime : now)) / 1000;
 
     this.lastInputTime = now;
 
