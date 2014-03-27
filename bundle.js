@@ -29,6 +29,10 @@ module.exports = (function () {
     // the client's own socket (which will be shared with the server)
     this.socket = new Socket();
 
+    // Used for user reconciliation
+    this.inputNumber = 0;
+    this.pendingInputs = [];
+
     this.bindEvents();
   };
 
@@ -37,7 +41,7 @@ module.exports = (function () {
 
     this.socket.on('world-update', function (data) {
       // fake 100ms lag
-      self.messages.enqueue(data, Date.now() + 100);
+      self.messages.enqueue(data, Date.now());
     });
 
     this.socket.on('new-entity', function (data) {
@@ -91,7 +95,20 @@ module.exports = (function () {
           this.entity.x = worldState[i].x;
           this.entity.y = worldState[i].y;
 
-          // TODO: Apply all inputs not yet acknowledged by the server
+          for (var j = 0; j < this.pendingInputs.length; ++j) {
+            // input already processed by the server and thus, applied
+            // to the entity in the previous update
+            if (this.pendingInputs[j].inputNumber <= worldState[i].lastProcessedInput) {
+              // no need to store it anymore
+              // decrease j to prevent for loop from breaking
+              this.pendingInputs.splice(j--, 1);
+            }
+            else {
+              // input not yet acknoledged by the server
+              // apply it on top of server update for reconciliation
+              this.entity.applyInput(this.pendingInputs[j]);
+            }
+          }
         }
         else {
           var otherPlayer = this.otherClients[worldState[i].entityId];
@@ -118,9 +135,15 @@ module.exports = (function () {
       return;
     }
 
-    var input = this.keyboardState;
+    // need a truly new object to prevent
+    // multiple inputs sharing state
+    var input = this.keyboardStateClone();
     input.deltaModifier = deltaModifier;
     input.entityId = this.entityId;
+    input.inputNumber = this.inputNumber++;
+
+    // Store all inputs yet to be acknowledged by the server
+    this.pendingInputs.push(input);
 
     // send data to server
     this.socket.emit('input', input);
@@ -130,11 +153,20 @@ module.exports = (function () {
     this.entity.applyInput(input);
   };
 
+  Client.prototype.keyboardStateClone = function () {
+    return {
+      LEFT: this.keyboardState.LEFT,
+      RIGHT: this.keyboardState.RIGHT,
+      UP: this.keyboardState.UP,
+      DOWN: this.keyboardState.DOWN
+    };
+  }
+
   Client.prototype.hasNewInput = function () {
-    return this.keyboardState.LEFT  ||
-           this.keyboardState.RIGHT ||
-           this.keyboardState.UP    ||
-           this.keyboardState.DOWN;
+    return !!(this.keyboardState.LEFT  ||
+              this.keyboardState.RIGHT ||
+              this.keyboardState.UP    ||
+              this.keyboardState.DOWN);
   };
 
   return Client;
@@ -246,6 +278,9 @@ module.exports = (function() {
     this.clientSockets = [];
     this.entities = [];
 
+    // Store last processed input number per client
+    this.lastProcessedInput = [];
+
     this.currentEntityId = 0;
 
     this.socket = socket;
@@ -267,9 +302,11 @@ module.exports = (function() {
     newEntity.x = Math.floor(Math.random() * 100);
     newEntity.y = Math.floor(Math.random() * 100);
 
+
     // Store Client entity and socket
     self.entities.push(newEntity);
     self.clientSockets.push(clientSocket);
+    this.lastProcessedInput.push(-1);
 
     // Send client new entity data
     clientSocket.emit('new-entity', {
@@ -293,9 +330,18 @@ module.exports = (function() {
   Server.prototype.processInputs = function () {
     var input;
 
-    // ! note assignement in loop !
+    // ! note assignment in loop !
     while ((input = this.messages.dequeue())) {
-      this.entities[input.payload.entityId].applyInput(input.payload);
+      input = input.payload;
+
+      // Apply new input only if it is a newer one
+      // ignore slow packets
+      var id = input.entityId;
+      // if (this.lastProcessedInput[id] < input.inputNumber) {
+        // console.log("server applying input: ", input.inputNumber, input);
+        this.entities[id].applyInput(input);
+        this.lastProcessedInput[id] = input.inputNumber;
+      // }
     }
   };
 
@@ -307,7 +353,8 @@ module.exports = (function() {
       worldState.push({
         entityId: this.entities[i].id,
         x: this.entities[i].x,
-        y: this.entities[i].y
+        y: this.entities[i].y,
+        lastProcessedInput: this.lastProcessedInput[i]
       });
     }
 
@@ -328,6 +375,9 @@ module.exports = (function() {
 }());
 
 },{"./Entity":2,"./MessageQueue":3}],5:[function(require,module,exports){
+// This is a totally fake socket
+// it just acts as an extremely simplified event emmiter
+
 /* global module */
 module.exports = (function () {
   'use strict';
@@ -366,29 +416,25 @@ var Socket = require('./Socket');
   // get DOM elements
   var serverCanvas = document.getElementById('server-canvas'),
       clientCanvas = document.getElementById('client-canvas'),
-      client2Canvas = document.getElementById('client2-canvas');
+      client2Canvas = document.getElementById('client2-canvas'),
+      client3Canvas = document.getElementById('client3-canvas');
 
   // set up world with only one client and one server
   var connectionSocket = new Socket(),
       server = new Server(connectionSocket, serverCanvas.getContext('2d')),
       client = new Client(connectionSocket, clientCanvas.getContext('2d')),
       client2 = new Client(connectionSocket, client2Canvas.getContext('2d')),
+      client3 = new Client(connectionSocket, client3Canvas.getContext('2d')),
       currClient = client;
 
 
-  // Toggle between clients every second
-  // just to test if evrybody is synchronized
-  setInterval(function () {
-    currClient.keyboardState = {};
-    currClient = currClient === client ? client2 : client;
-  }, 1000);
-
   // update server 30 times per second
-  setInterval(server.update.bind(server), 1000 / 20);
+  setInterval(server.update.bind(server), 1000 / 60);
 
   // update client 50 times per second
   setInterval(client.update.bind(client), 1000 / 60);
   setInterval(client2.update.bind(client2), 1000 / 60);
+  setInterval(client3.update.bind(client3), 1000 / 60);
 
   // bind some events
   document.addEventListener('keydown', function (e) {

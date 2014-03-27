@@ -13,6 +13,9 @@ module.exports = (function() {
     this.clientSockets = [];
     this.entities = [];
 
+    // Store last processed input number per client
+    this.lastProcessedInput = [];
+
     this.currentEntityId = 0;
 
     this.socket = socket;
@@ -34,9 +37,11 @@ module.exports = (function() {
     newEntity.x = Math.floor(Math.random() * 100);
     newEntity.y = Math.floor(Math.random() * 100);
 
+
     // Store Client entity and socket
     self.entities.push(newEntity);
     self.clientSockets.push(clientSocket);
+    this.lastProcessedInput.push(-1);
 
     // Send client new entity data
     clientSocket.emit('new-entity', {
@@ -60,9 +65,18 @@ module.exports = (function() {
   Server.prototype.processInputs = function () {
     var input;
 
-    // ! note assignement in loop !
+    // ! note assignment in loop !
     while ((input = this.messages.dequeue())) {
-      this.entities[input.payload.entityId].applyInput(input.payload);
+      input = input.payload;
+
+      // Apply new input only if it is a newer one
+      // ignore slow packets
+      var id = input.entityId;
+      // if (this.lastProcessedInput[id] < input.inputNumber) {
+        // console.log("server applying input: ", input.inputNumber, input);
+        this.entities[id].applyInput(input);
+        this.lastProcessedInput[id] = input.inputNumber;
+      // }
     }
   };
 
@@ -74,7 +88,8 @@ module.exports = (function() {
       worldState.push({
         entityId: this.entities[i].id,
         x: this.entities[i].x,
-        y: this.entities[i].y
+        y: this.entities[i].y,
+        lastProcessedInput: this.lastProcessedInput[i]
       });
     }
 
