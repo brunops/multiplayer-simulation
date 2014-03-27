@@ -130,10 +130,10 @@ module.exports = (function () {
   };
 
   Client.prototype.hasNewInput = function () {
-    return this.keyboardState.LEFT  ||
-           this.keyboardState.RIGHT ||
-           this.keyboardState.UP    ||
-           this.keyboardState.DOWN;
+    return !!(this.keyboardState.LEFT  ||
+              this.keyboardState.RIGHT ||
+              this.keyboardState.UP    ||
+              this.keyboardState.DOWN);
   };
 
   return Client;
