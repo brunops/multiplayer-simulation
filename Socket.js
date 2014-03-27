@@ -1,3 +1,6 @@
+// This is a totally fake socket
+// it just acts as an extremely simplified event emmiter
+
 /* global module */
 module.exports = (function () {
   'use strict';
