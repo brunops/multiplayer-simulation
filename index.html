@@ -8,13 +8,28 @@
     canvas {
       border: 5px solid black;
     }
+
+    .canvas-wrapper {
+      display: inline-block;
+    }
   </style>
 </head>
 <body>
-  <h2>Client</h2>
-  <canvas id="client-canvas" width="200" height="200"></canvas>
+  <div class="canvas-wrapper">
+    <h2>Client</h2>
+    <canvas id="client-canvas" width="200" height="200"></canvas>
+  </div>
 
-  <h2>Server</h2>
-  <canvas id="server-canvas" width="200" height="200"></canvas>
+  <div class="canvas-wrapper">
+    <h2>Client 2</h2>
+    <canvas id="client2-canvas" width="200" height="200"></canvas>
+  </div>
+
+  <div class="canvas-wrapper">
+    <h2>Server</h2>
+    <canvas id="server-canvas" width="200" height="200"></canvas>
+  </div>
+
+  <script src='bundle.js'></script>
 </body>
 </html>
