@@ -52,7 +52,7 @@ module.exports = (function() {
 
     // Listen to client input
     clientSocket.on('input', function (input) {
-      self.messages.enqueue(input);
+      self.messages.enqueue(input, input.t);
     });
   };
 
@@ -72,11 +72,10 @@ module.exports = (function() {
       // Apply new input only if it is a newer one
       // ignore slow packets
       var id = input.entityId;
-      // if (this.lastProcessedInput[id] < input.inputNumber) {
-        // console.log("server applying input: ", input.inputNumber, input);
+      if (this.lastProcessedInput[id] < input.inputNumber) {
         this.entities[id].applyInput(input);
         this.lastProcessedInput[id] = input.inputNumber;
-      // }
+      }
     }
   };
 

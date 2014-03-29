@@ -6,11 +6,16 @@ var Socket = require('./Socket');
 (function () {
   'use strict';
 
-  // get DOM elements
+  // get canvas DOM elements
   var serverCanvas = document.getElementById('server-canvas'),
       clientCanvas = document.getElementById('client-canvas'),
       client2Canvas = document.getElementById('client2-canvas'),
       client3Canvas = document.getElementById('client3-canvas');
+
+  // get lag inputs DOM elements
+  var client1Lag = document.getElementById('client1-lag'),
+      client2Lag = document.getElementById('client2-lag'),
+      client3Lag = document.getElementById('client3-lag');
 
   // set up world with only one client and one server
   var connectionSocket = new Socket(),
@@ -45,7 +50,7 @@ var Socket = require('./Socket');
         currClient.keyboardState.DOWN = true;
         break;
     }
-  });
+  }, false);
 
   document.addEventListener('keyup', function (e) {
     switch (e.keyCode) {
@@ -62,6 +67,20 @@ var Socket = require('./Socket');
         delete currClient.keyboardState.DOWN;
         break;
     }
-  });
+  }, false);
 
+  client1Lag.addEventListener('change', function (e) {
+    console.log(this.value)
+    client.fakeLag = parseInt(this.value, 10);
+  }, false);
+
+  client2Lag.addEventListener('change', function (e) {
+    console.log(this.value)
+    client2.fakeLag = parseInt(this.value, 10);
+  }, false);
+
+  client3Lag.addEventListener('change', function (e) {
+    console.log(this.value)
+    client3.fakeLag = parseInt(this.value, 10);
+  }, false);
 }());

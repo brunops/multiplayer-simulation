@@ -15,6 +15,7 @@ module.exports = (function () {
 
     this.entity = null;
     this.otherClients = {};
+    this.fakeLag = 0;
 
     this.messages = new MessageQueue();
 
@@ -40,7 +41,7 @@ module.exports = (function () {
 
     this.socket.on('world-update', function (data) {
       // fake 100ms lag
-      self.messages.enqueue(data, Date.now());
+      self.messages.enqueue(data, Date.now() + self.fakeLag);
     });
 
     this.socket.on('new-entity', function (data) {
@@ -140,6 +141,7 @@ module.exports = (function () {
     input.deltaModifier = deltaModifier;
     input.entityId = this.entityId;
     input.inputNumber = this.inputNumber++;
+    input.t = now + this.fakeLag;
 
     // Store all inputs yet to be acknowledged by the server
     this.pendingInputs.push(input);
@@ -159,7 +161,7 @@ module.exports = (function () {
       UP: this.keyboardState.UP,
       DOWN: this.keyboardState.DOWN
     };
-  }
+  };
 
   Client.prototype.hasNewInput = function () {
     return !!(this.keyboardState.LEFT  ||
