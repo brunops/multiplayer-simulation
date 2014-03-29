@@ -69,15 +69,15 @@ var Socket = require('./Socket');
     }
   }, false);
 
-  client1Lag.addEventListener('change', function (e) {
+  client1Lag.addEventListener('change', function () {
     client.fakeLag = parseInt(this.value, 10);
   }, false);
 
-  client2Lag.addEventListener('change', function (e) {
+  client2Lag.addEventListener('change', function () {
     client2.fakeLag = parseInt(this.value, 10);
   }, false);
 
-  client3Lag.addEventListener('change', function (e) {
+  client3Lag.addEventListener('change', function () {
     client3.fakeLag = parseInt(this.value, 10);
   }, false);
 }());
