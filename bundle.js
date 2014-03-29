@@ -16,6 +16,7 @@ module.exports = (function () {
 
     this.entity = null;
     this.otherClients = {};
+    this.fakeLag = 0;
 
     this.messages = new MessageQueue();
 
@@ -41,7 +42,7 @@ module.exports = (function () {
 
     this.socket.on('world-update', function (data) {
       // fake 100ms lag
-      self.messages.enqueue(data, Date.now());
+      self.messages.enqueue(data, Date.now() + self.fakeLag);
     });
 
     this.socket.on('new-entity', function (data) {
@@ -141,6 +142,7 @@ module.exports = (function () {
     input.deltaModifier = deltaModifier;
     input.entityId = this.entityId;
     input.inputNumber = this.inputNumber++;
+    input.t = now + this.fakeLag;
 
     // Store all inputs yet to be acknowledged by the server
     this.pendingInputs.push(input);
@@ -160,7 +162,7 @@ module.exports = (function () {
       UP: this.keyboardState.UP,
       DOWN: this.keyboardState.DOWN
     };
-  }
+  };
 
   Client.prototype.hasNewInput = function () {
     return !!(this.keyboardState.LEFT  ||
@@ -317,7 +319,7 @@ module.exports = (function() {
 
     // Listen to client input
     clientSocket.on('input', function (input) {
-      self.messages.enqueue(input);
+      self.messages.enqueue(input, input.t);
     });
   };
 
@@ -337,11 +339,10 @@ module.exports = (function() {
       // Apply new input only if it is a newer one
       // ignore slow packets
       var id = input.entityId;
-      // if (this.lastProcessedInput[id] < input.inputNumber) {
-        // console.log("server applying input: ", input.inputNumber, input);
+      if (this.lastProcessedInput[id] < input.inputNumber) {
         this.entities[id].applyInput(input);
         this.lastProcessedInput[id] = input.inputNumber;
-      // }
+      }
     }
   };
 
@@ -413,11 +414,16 @@ var Socket = require('./Socket');
 (function () {
   'use strict';
 
-  // get DOM elements
+  // get canvas DOM elements
   var serverCanvas = document.getElementById('server-canvas'),
       clientCanvas = document.getElementById('client-canvas'),
       client2Canvas = document.getElementById('client2-canvas'),
       client3Canvas = document.getElementById('client3-canvas');
+
+  // get lag inputs DOM elements
+  var client1Lag = document.getElementById('client1-lag'),
+      client2Lag = document.getElementById('client2-lag'),
+      client3Lag = document.getElementById('client3-lag');
 
   // set up world with only one client and one server
   var connectionSocket = new Socket(),
@@ -452,7 +458,7 @@ var Socket = require('./Socket');
         currClient.keyboardState.DOWN = true;
         break;
     }
-  });
+  }, false);
 
   document.addEventListener('keyup', function (e) {
     switch (e.keyCode) {
@@ -469,8 +475,22 @@ var Socket = require('./Socket');
         delete currClient.keyboardState.DOWN;
         break;
     }
-  });
+  }, false);
 
+  client1Lag.addEventListener('change', function (e) {
+    console.log(this.value)
+    client.fakeLag = parseInt(this.value, 10);
+  }, false);
+
+  client2Lag.addEventListener('change', function (e) {
+    console.log(this.value)
+    client2.fakeLag = parseInt(this.value, 10);
+  }, false);
+
+  client3Lag.addEventListener('change', function (e) {
+    console.log(this.value)
+    client3.fakeLag = parseInt(this.value, 10);
+  }, false);
 }());
 
 },{"./Client":1,"./Server":4,"./Socket":5}]},{},[6])
