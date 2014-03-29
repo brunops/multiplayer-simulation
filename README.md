@@ -4,3 +4,5 @@ Simulate a multiplayer action game on the client. The idea is to understande how
 
 Great article about it [here](http://www.gabrielgambetta.com/fpm1.html)
 
+##Screen shot
+![Screen shot](screenshot.png)
