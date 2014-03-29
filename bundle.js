@@ -478,17 +478,14 @@ var Socket = require('./Socket');
   }, false);
 
   client1Lag.addEventListener('change', function (e) {
-    console.log(this.value)
     client.fakeLag = parseInt(this.value, 10);
   }, false);
 
   client2Lag.addEventListener('change', function (e) {
-    console.log(this.value)
     client2.fakeLag = parseInt(this.value, 10);
   }, false);
 
   client3Lag.addEventListener('change', function (e) {
-    console.log(this.value)
     client3.fakeLag = parseInt(this.value, 10);
   }, false);
 }());
