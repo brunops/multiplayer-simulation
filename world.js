@@ -15,7 +15,8 @@ var Socket = require('./Socket');
   // get lag inputs DOM elements
   var client1Lag = document.getElementById('client1-lag'),
       client2Lag = document.getElementById('client2-lag'),
-      client3Lag = document.getElementById('client3-lag');
+      client3Lag = document.getElementById('client3-lag'),
+      current = document.getElementById('current');
 
   // set up world with only one client and one server
   var connectionSocket = new Socket(),
@@ -79,5 +80,22 @@ var Socket = require('./Socket');
 
   client3Lag.addEventListener('change', function () {
     client3.fakeLag = parseInt(this.value, 10);
+  }, false);
+
+  current.addEventListener('change', function () {
+    var currentClientNumber = parseInt(this.value, 10);
+    if (currentClientNumber >= 0 || currentClientNumber <= 3) {
+      switch (currentClientNumber) {
+        case 1:
+          currClient = client;
+          break;
+        case 2:
+          currClient = client2;
+          break;
+        case 3:
+          currClient = client3;
+          break;
+      }
+    }
   }, false);
 }());
