@@ -6,3 +6,6 @@ Great article about it [here](http://www.gabrielgambetta.com/fpm1.html)
 
 ##Screen shot
 ![Screen shot](screenshot.png)
+
+##LICENSE
+MIT
