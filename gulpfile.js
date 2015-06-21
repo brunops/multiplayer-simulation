@@ -7,12 +7,12 @@ gulp.task('scripts', function () {
   return browserify('./js/world.js')
     .bundle()
     .pipe(source('bundle.js'))
-    .pipe(gulp.dest('./build/js'))
+    .pipe(gulp.dest('./build/js'));
 });
 
 gulp.task('html', function () {
   return gulp.src('./*.html')
-    .pipe(gulp.dest('./build'))
+    .pipe(gulp.dest('./build'));
 });
 
 gulp.task('watch', function () {
