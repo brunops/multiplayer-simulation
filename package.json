@@ -1,0 +1,25 @@
+{
+  "name": "multiplayer-simulation",
+  "version": "1.0.0",
+  "description": "Simulate multiplayer syncronization",
+  "main": "",
+  "scripts": {
+    "start": "gulp"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/brunops/multiplayer-simulation.git"
+  },
+  "author": "brunops",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/brunops/multiplayer-simulation/issues"
+  },
+  "homepage": "https://github.com/brunops/multiplayer-simulation#readme",
+  "devDependencies": {
+    "browserify": "^14.4.0",
+    "gulp": "^3.9.1",
+    "gulp-open": "^2.0.0",
+    "vinyl-source-stream": "^1.1.0"
+  }
+}
